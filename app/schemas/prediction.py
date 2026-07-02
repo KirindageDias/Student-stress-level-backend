@@ -1,19 +1,27 @@
-from typing import List
+from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
 
 class QuestionnaireInput(BaseModel):
+    undergraduate_student: int = Field(..., ge=0, le=1)
     age_group: int = Field(..., ge=1, le=4)
+    gender: int = Field(..., ge=1, le=3)
     year_of_study: int = Field(..., ge=1, le=4)
     working_while_studying: int = Field(..., ge=0, le=1)
     academic_performance: int = Field(..., ge=1, le=5)
     study_hours: int = Field(..., ge=1, le=4)
+    deadline_pressure: int = Field(..., ge=1, le=5)
     sleep_hours: int = Field(..., ge=1, le=4)
     sleep_quality: int = Field(..., ge=1, le=5)
+    sleep_overthinking: int = Field(..., ge=1, le=5)
+    self_confidence: int = Field(..., ge=1, le=5)
+    life_satisfaction: int = Field(..., ge=1, le=5)
+    overwhelmed: int = Field(..., ge=1, le=5)
     physical_activity: int = Field(..., ge=1, le=5)
     social_time: int = Field(..., ge=1, le=5)
     financial_pressure: int = Field(..., ge=1, le=5)
+    main_stress_reason: Optional[str] = None
 
     gad_1: int = Field(..., ge=0, le=3)
     gad_2: int = Field(..., ge=0, le=3)

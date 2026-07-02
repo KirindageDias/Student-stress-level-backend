@@ -13,13 +13,20 @@ label_encoder: Optional[Any] = None
 metadata: Optional[Dict[str, Any]] = None
 
 RAW_COLUMNS = [
+    "undergraduate_student",
     "age_group",
+    "gender",
     "year_of_study",
     "working_while_studying",
     "academic_performance",
     "study_hours",
+    "deadline_pressure",
     "sleep_hours",
     "sleep_quality",
+    "sleep_overthinking",
+    "self_confidence",
+    "life_satisfaction",
+    "overwhelmed",
     "physical_activity",
     "social_time",
     "financial_pressure",
@@ -44,6 +51,8 @@ ENGINEERED_COLUMNS = [
     "who5_percent",
     "academic_pressure_score",
     "sleep_risk_score",
+    "self_reported_wellbeing_score",
+    "responsibility_load_score",
     "lifestyle_support_score",
     "financial_pressure_score",
 ]
@@ -153,11 +162,21 @@ def calculate_features(data: QuestionnaireInput) -> Dict[str, float]:
         [
             normalize_1_to_5(data.study_hours),
             normalize_1_to_5(6 - data.academic_performance),
+            normalize_1_to_5(data.deadline_pressure),
             55 if data.year_of_study >= 3 else 30,
         ]
     )
     sleep_duration_risk = {1: 100, 2: 70, 3: 20, 4: 35}[data.sleep_hours]
-    sleep_risk_score = np.mean([sleep_duration_risk, normalize_1_to_5(6 - data.sleep_quality)])
+    sleep_risk_score = np.mean(
+        [
+            sleep_duration_risk,
+            normalize_1_to_5(6 - data.sleep_quality),
+            normalize_1_to_5(data.sleep_overthinking),
+        ]
+    )
+    self_reported_wellbeing_score = np.mean(
+        [normalize_1_to_5(data.self_confidence), normalize_1_to_5(data.life_satisfaction)]
+    )
     lifestyle_support_score = np.mean(
         [normalize_1_to_5(data.physical_activity), normalize_1_to_5(data.social_time)]
     )
@@ -174,6 +193,8 @@ def calculate_features(data: QuestionnaireInput) -> Dict[str, float]:
             "who5_percent": who5_raw * 4,
             "academic_pressure_score": round(academic_pressure_score, 2),
             "sleep_risk_score": round(sleep_risk_score, 2),
+            "self_reported_wellbeing_score": round(self_reported_wellbeing_score, 2),
+            "responsibility_load_score": round(normalize_1_to_5(data.overwhelmed), 2),
             "lifestyle_support_score": round(lifestyle_support_score, 2),
             "financial_pressure_score": round(normalize_1_to_5(data.financial_pressure), 2),
         }
@@ -197,11 +218,13 @@ def get_model_confidence(current_model: Any, model_input: np.ndarray, target_lab
 
 def build_top_factors(features: Dict[str, float]) -> List[Dict[str, Any]]:
     factor_scores = [
-        ("GAD-7 anxiety", features["gad7_percent"], False),
+        ("Anxiety", features["gad7_percent"], False),
         ("Academic pressure", features["academic_pressure_score"], False),
         ("Sleep risk", features["sleep_risk_score"], False),
+        ("Responsibility load", features["responsibility_load_score"], False),
         ("Financial pressure", features["financial_pressure_score"], False),
-        ("WHO-5 well-being", features["who5_percent"], True),
+        ("Well-being", features["who5_percent"], True),
+        ("Self-reported well-being", features["self_reported_wellbeing_score"], True),
         ("Lifestyle and social support", features["lifestyle_support_score"], True),
     ]
     ranked = sorted(factor_scores, key=lambda item: 100 - item[1] if item[2] else item[1], reverse=True)
@@ -226,7 +249,7 @@ def build_recommendations(features: Dict[str, float]) -> List[Dict[str, str]]:
         add_recommendation(
             recommendations,
             "Use a short anxiety reset before demanding tasks",
-            "GAD-7 anxiety",
+            "Anxiety",
             "High",
             "Try box breathing for two minutes before exams, presentations, work shifts, or difficult study blocks.",
         )
@@ -234,9 +257,9 @@ def build_recommendations(features: Dict[str, float]) -> List[Dict[str, str]]:
         add_recommendation(
             recommendations,
             "Speak to a human support service",
-            "PSS-10 stress",
+            "Stress",
             "Urgent",
-            "Your PSS-10 score is in the high range. Consider contacting a university counselor, trusted lecturer, doctor, or family member soon.",
+            "Your stress score is in the high range. Consider contacting a university counselor, trusted lecturer, doctor, or family member soon.",
         )
     if features["sleep_risk_score"] >= 55:
         add_recommendation(
@@ -253,6 +276,14 @@ def build_recommendations(features: Dict[str, float]) -> List[Dict[str, str]]:
             "Academic",
             "Medium",
             "Plan three must-do tasks per day. Use 50-minute focus blocks with 10-minute breaks and start assignments with a 15-minute first step.",
+        )
+    if features["responsibility_load_score"] >= 55:
+        add_recommendation(
+            recommendations,
+            "Reduce responsibilities into a smaller daily list",
+            "Responsibilities",
+            "Medium",
+            "Pick the three most important tasks for today and move the rest to a later list. This helps make the workload feel controllable.",
         )
     if features["financial_pressure"] >= 4 or features["working_while_studying"] == 1:
         add_recommendation(
@@ -282,7 +313,7 @@ def build_recommendations(features: Dict[str, float]) -> List[Dict[str, str]]:
         add_recommendation(
             recommendations,
             "Add one well-being recovery habit",
-            "WHO-5 well-being",
+            "Well-being",
             "Medium",
             "At the end of each day, write one completed task and one next small step. Low WHO-5 scores are a signal to increase support and recovery.",
         )
@@ -322,5 +353,5 @@ def predict_student_stress(data: QuestionnaireInput) -> Dict[str, Any]:
         "model_confidence": confidence,
         "top_factors": build_top_factors(features),
         "recommendations": build_recommendations(features),
-        "safety_note": "This tool uses validated scale scoring for research and self-care support, not clinical diagnosis. If stress feels unmanageable or unsafe, contact a qualified professional or emergency support.",
+        "safety_note": "This tool is for research and self-care support, not clinical diagnosis. If stress feels unmanageable or unsafe, contact a qualified professional or emergency support.",
     }
