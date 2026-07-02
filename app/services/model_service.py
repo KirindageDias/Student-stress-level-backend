@@ -21,38 +21,27 @@ RAW_COLUMNS = [
     "academic_performance",
     "study_hours",
     "deadline_pressure",
+    "anxiety_1",
+    "anxiety_2",
+    "wellbeing_1",
+    "wellbeing_2",
+    "wellbeing_3",
+    "wellbeing_4",
+    "wellbeing_5",
     "sleep_hours",
-    "sleep_quality",
-    "sleep_overthinking",
-    "self_confidence",
-    "life_satisfaction",
-    "overwhelmed",
+    "sleep_rested",
     "physical_activity",
     "social_time",
     "financial_pressure",
-    "gad_1",
-    "gad_2",
-    "gad_3",
-    "gad_4",
-    "gad_5",
-    "gad_6",
-    "gad_7",
-    "who_1",
-    "who_2",
-    "who_3",
-    "who_4",
-    "who_5",
 ]
 
 ENGINEERED_COLUMNS = [
-    "gad7_score",
-    "gad7_percent",
-    "who5_raw",
-    "who5_percent",
+    "anxiety_score",
+    "anxiety_percent",
+    "wellbeing_raw",
+    "wellbeing_percent",
     "academic_pressure_score",
     "sleep_risk_score",
-    "self_reported_wellbeing_score",
-    "responsibility_load_score",
     "lifestyle_support_score",
     "financial_pressure_score",
 ]
@@ -69,10 +58,9 @@ def load_ml_files() -> Tuple[Any, Any, Dict[str, Any]]:
         if not path.exists()
     ]
     if missing_files:
-        missing_text = ", ".join(missing_files)
         raise HTTPException(
             status_code=503,
-            detail=f"Missing model file(s): {missing_text}. Train models and copy them into backend/models.",
+            detail=f"Missing model file(s): {', '.join(missing_files)}. Train models and copy them into backend/models.",
         )
 
     if model is None:
@@ -97,24 +85,14 @@ def normalize_1_to_5(value: float) -> float:
     return ((value - 1) / 4) * 100
 
 
-def reverse_pss(value: int) -> int:
+def reverse_stress(value: int) -> int:
     return 4 - value
 
 
-def gad7_level(score: int) -> str:
-    if score <= 4:
-        return "Minimal"
-    if score <= 9:
-        return "Mild"
-    if score <= 14:
-        return "Moderate"
-    return "Severe"
-
-
-def pss10_level(score: int) -> str:
-    if score <= 13:
+def stress_level(score: int) -> str:
+    if score <= 5:
         return "Low Stress"
-    if score <= 26:
+    if score <= 10:
         return "Moderate Stress"
     return "High Stress"
 
@@ -131,32 +109,17 @@ def score_level_0_100(score: float, reverse: bool = False) -> str:
 def calculate_features(data: QuestionnaireInput) -> Dict[str, float]:
     raw = data.dict()
 
-    gad7_score = sum(
+    anxiety_score = data.anxiety_1 + data.anxiety_2
+    stress_score = data.stress_1 + reverse_stress(data.stress_2) + reverse_stress(data.stress_3) + data.stress_4
+    wellbeing_raw = sum(
         [
-            data.gad_1,
-            data.gad_2,
-            data.gad_3,
-            data.gad_4,
-            data.gad_5,
-            data.gad_6,
-            data.gad_7,
+            data.wellbeing_1,
+            data.wellbeing_2,
+            data.wellbeing_3,
+            data.wellbeing_4,
+            data.wellbeing_5,
         ]
     )
-    pss10_score = sum(
-        [
-            data.pss_1,
-            data.pss_2,
-            data.pss_3,
-            reverse_pss(data.pss_4),
-            reverse_pss(data.pss_5),
-            data.pss_6,
-            reverse_pss(data.pss_7),
-            reverse_pss(data.pss_8),
-            data.pss_9,
-            data.pss_10,
-        ]
-    )
-    who5_raw = sum([data.who_1, data.who_2, data.who_3, data.who_4, data.who_5])
 
     academic_pressure_score = np.mean(
         [
@@ -167,34 +130,22 @@ def calculate_features(data: QuestionnaireInput) -> Dict[str, float]:
         ]
     )
     sleep_duration_risk = {1: 100, 2: 70, 3: 20, 4: 35}[data.sleep_hours]
-    sleep_risk_score = np.mean(
-        [
-            sleep_duration_risk,
-            normalize_1_to_5(6 - data.sleep_quality),
-            normalize_1_to_5(data.sleep_overthinking),
-        ]
-    )
-    self_reported_wellbeing_score = np.mean(
-        [normalize_1_to_5(data.self_confidence), normalize_1_to_5(data.life_satisfaction)]
-    )
+    sleep_risk_score = np.mean([sleep_duration_risk, normalize_1_to_5(6 - data.sleep_rested)])
     lifestyle_support_score = np.mean(
         [normalize_1_to_5(data.physical_activity), normalize_1_to_5(data.social_time)]
     )
 
     raw.update(
         {
-            "gad7_score": gad7_score,
-            "gad7_percent": round(normalize(gad7_score, 21), 2),
-            "gad7_level": gad7_level(gad7_score),
-            "pss10_score": pss10_score,
-            "pss10_percent": round(normalize(pss10_score, 40), 2),
-            "pss10_level": pss10_level(pss10_score),
-            "who5_raw": who5_raw,
-            "who5_percent": who5_raw * 4,
+            "anxiety_score": anxiety_score,
+            "anxiety_percent": round(normalize(anxiety_score, 6), 2),
+            "stress_score": stress_score,
+            "stress_percent": round(normalize(stress_score, 16), 2),
+            "stress_level": stress_level(stress_score),
+            "wellbeing_raw": wellbeing_raw,
+            "wellbeing_percent": wellbeing_raw * 4,
             "academic_pressure_score": round(academic_pressure_score, 2),
             "sleep_risk_score": round(sleep_risk_score, 2),
-            "self_reported_wellbeing_score": round(self_reported_wellbeing_score, 2),
-            "responsibility_load_score": round(normalize_1_to_5(data.overwhelmed), 2),
             "lifestyle_support_score": round(lifestyle_support_score, 2),
             "financial_pressure_score": round(normalize_1_to_5(data.financial_pressure), 2),
         }
@@ -218,22 +169,16 @@ def get_model_confidence(current_model: Any, model_input: np.ndarray, target_lab
 
 def build_top_factors(features: Dict[str, float]) -> List[Dict[str, Any]]:
     factor_scores = [
-        ("Anxiety", features["gad7_percent"], False),
+        ("Anxiety", features["anxiety_percent"], False),
         ("Academic pressure", features["academic_pressure_score"], False),
         ("Sleep risk", features["sleep_risk_score"], False),
-        ("Responsibility load", features["responsibility_load_score"], False),
         ("Financial pressure", features["financial_pressure_score"], False),
-        ("Well-being", features["who5_percent"], True),
-        ("Self-reported well-being", features["self_reported_wellbeing_score"], True),
+        ("Well-being", features["wellbeing_percent"], True),
         ("Lifestyle and social support", features["lifestyle_support_score"], True),
     ]
     ranked = sorted(factor_scores, key=lambda item: 100 - item[1] if item[2] else item[1], reverse=True)
     return [
-        {
-            "name": name,
-            "score": int(round(score)),
-            "level": score_level_0_100(score, reverse=reverse),
-        }
+        {"name": name, "score": int(round(score)), "level": score_level_0_100(score, reverse=reverse)}
         for name, score, reverse in ranked
     ]
 
@@ -245,7 +190,7 @@ def add_recommendation(items: List[Dict[str, str]], title: str, category: str, p
 def build_recommendations(features: Dict[str, float]) -> List[Dict[str, str]]:
     recommendations: List[Dict[str, str]] = []
 
-    if features["gad7_score"] >= 10:
+    if features["anxiety_score"] >= 3:
         add_recommendation(
             recommendations,
             "Use a short anxiety reset before demanding tasks",
@@ -253,7 +198,7 @@ def build_recommendations(features: Dict[str, float]) -> List[Dict[str, str]]:
             "High",
             "Try box breathing for two minutes before exams, presentations, work shifts, or difficult study blocks.",
         )
-    if features["pss10_score"] >= 27:
+    if features["stress_score"] >= 11:
         add_recommendation(
             recommendations,
             "Speak to a human support service",
@@ -276,14 +221,6 @@ def build_recommendations(features: Dict[str, float]) -> List[Dict[str, str]]:
             "Academic",
             "Medium",
             "Plan three must-do tasks per day. Use 50-minute focus blocks with 10-minute breaks and start assignments with a 15-minute first step.",
-        )
-    if features["responsibility_load_score"] >= 55:
-        add_recommendation(
-            recommendations,
-            "Reduce responsibilities into a smaller daily list",
-            "Responsibilities",
-            "Medium",
-            "Pick the three most important tasks for today and move the rest to a later list. This helps make the workload feel controllable.",
         )
     if features["financial_pressure"] >= 4 or features["working_while_studying"] == 1:
         add_recommendation(
@@ -309,13 +246,13 @@ def build_recommendations(features: Dict[str, float]) -> List[Dict[str, str]]:
             "Medium",
             "Message or call one trusted friend or family member twice a week. Keep it simple: one meal, walk, or 10-minute call.",
         )
-    if features["who5_raw"] < 13:
+    if features["wellbeing_raw"] < 13:
         add_recommendation(
             recommendations,
             "Add one well-being recovery habit",
             "Well-being",
             "Medium",
-            "At the end of each day, write one completed task and one next small step. Low WHO-5 scores are a signal to increase support and recovery.",
+            "At the end of each day, write one completed task and one next small step. Low well-being scores are a signal to increase support and recovery.",
         )
 
     add_recommendation(
@@ -330,15 +267,15 @@ def build_recommendations(features: Dict[str, float]) -> List[Dict[str, str]]:
 
 
 def predict_student_stress(data: QuestionnaireInput) -> Dict[str, Any]:
-    current_model, current_label_encoder, current_metadata = load_ml_files()
+    current_model, _, current_metadata = load_ml_files()
     features = calculate_features(data)
     feature_columns = current_metadata.get("feature_columns", DEFAULT_FEATURE_COLUMNS)
     model_input = np.array([[features[column] for column in feature_columns]])
-    pss_label = features["pss10_level"].replace(" Stress", "")
+    target_label = features["stress_level"].replace(" Stress", "")
 
     try:
         current_model.predict(model_input)
-        confidence = get_model_confidence(current_model, model_input, pss_label)
+        confidence = get_model_confidence(current_model, model_input, target_label)
     except Exception as error:
         raise HTTPException(
             status_code=500,
@@ -346,10 +283,10 @@ def predict_student_stress(data: QuestionnaireInput) -> Dict[str, Any]:
         ) from error
 
     return {
-        "predicted_stress_level": features["pss10_level"],
-        "calculated_stress_score": int(round(features["pss10_percent"])),
-        "calculated_anxiety_score": int(round(features["gad7_percent"])),
-        "wellbeing_score": int(round(features["who5_percent"])),
+        "predicted_stress_level": features["stress_level"],
+        "calculated_stress_score": int(round(features["stress_percent"])),
+        "calculated_anxiety_score": int(round(features["anxiety_percent"])),
+        "wellbeing_score": int(round(features["wellbeing_percent"])),
         "model_confidence": confidence,
         "top_factors": build_top_factors(features),
         "recommendations": build_recommendations(features),

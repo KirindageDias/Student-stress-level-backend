@@ -12,41 +12,27 @@ class QuestionnaireInput(BaseModel):
     academic_performance: int = Field(..., ge=1, le=5)
     study_hours: int = Field(..., ge=1, le=4)
     deadline_pressure: int = Field(..., ge=1, le=5)
+
+    anxiety_1: int = Field(..., ge=0, le=3)
+    anxiety_2: int = Field(..., ge=0, le=3)
+
+    stress_1: int = Field(..., ge=0, le=4)
+    stress_2: int = Field(..., ge=0, le=4)
+    stress_3: int = Field(..., ge=0, le=4)
+    stress_4: int = Field(..., ge=0, le=4)
+
+    wellbeing_1: int = Field(..., ge=0, le=5)
+    wellbeing_2: int = Field(..., ge=0, le=5)
+    wellbeing_3: int = Field(..., ge=0, le=5)
+    wellbeing_4: int = Field(..., ge=0, le=5)
+    wellbeing_5: int = Field(..., ge=0, le=5)
+
     sleep_hours: int = Field(..., ge=1, le=4)
-    sleep_quality: int = Field(..., ge=1, le=5)
-    sleep_overthinking: int = Field(..., ge=1, le=5)
-    self_confidence: int = Field(..., ge=1, le=5)
-    life_satisfaction: int = Field(..., ge=1, le=5)
-    overwhelmed: int = Field(..., ge=1, le=5)
+    sleep_rested: int = Field(..., ge=1, le=5)
     physical_activity: int = Field(..., ge=1, le=5)
     social_time: int = Field(..., ge=1, le=5)
     financial_pressure: int = Field(..., ge=1, le=5)
     main_stress_reason: Optional[str] = None
-
-    gad_1: int = Field(..., ge=0, le=3)
-    gad_2: int = Field(..., ge=0, le=3)
-    gad_3: int = Field(..., ge=0, le=3)
-    gad_4: int = Field(..., ge=0, le=3)
-    gad_5: int = Field(..., ge=0, le=3)
-    gad_6: int = Field(..., ge=0, le=3)
-    gad_7: int = Field(..., ge=0, le=3)
-
-    pss_1: int = Field(..., ge=0, le=4)
-    pss_2: int = Field(..., ge=0, le=4)
-    pss_3: int = Field(..., ge=0, le=4)
-    pss_4: int = Field(..., ge=0, le=4)
-    pss_5: int = Field(..., ge=0, le=4)
-    pss_6: int = Field(..., ge=0, le=4)
-    pss_7: int = Field(..., ge=0, le=4)
-    pss_8: int = Field(..., ge=0, le=4)
-    pss_9: int = Field(..., ge=0, le=4)
-    pss_10: int = Field(..., ge=0, le=4)
-
-    who_1: int = Field(..., ge=0, le=5)
-    who_2: int = Field(..., ge=0, le=5)
-    who_3: int = Field(..., ge=0, le=5)
-    who_4: int = Field(..., ge=0, le=5)
-    who_5: int = Field(..., ge=0, le=5)
 
 
 class FactorScore(BaseModel):
