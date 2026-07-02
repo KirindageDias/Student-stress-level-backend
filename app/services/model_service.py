@@ -168,11 +168,11 @@ def calculate_stress_score(features: Dict[str, float]) -> int:
 def format_stress_label(raw_label: Any) -> str:
     normalized = str(raw_label).strip().lower()
     label_map = {
-        "low": "Low Stress",
-        "moderate": "Moderate Stress",
-        "medium": "Moderate Stress",
-        "high": "High Stress",
-        "extreme": "Extreme Stress",
+        "low": "Low Pressure",
+        "moderate": "Moderate Pressure",
+        "medium": "Moderate Pressure",
+        "high": "High Pressure",
+        "extreme": "Extreme Pressure",
     }
     return label_map.get(normalized, str(raw_label))
 
@@ -246,7 +246,7 @@ def build_recommendations(features: Dict[str, float], stress_score: int) -> List
             "Balance work shifts with recovery blocks",
             "Work and finance",
             "Medium",
-            "Reserve at least one non-work recovery block each week. Track transport, food, and course expenses weekly so money stress becomes visible and manageable.",
+            "Reserve at least one non-work recovery block each week. Track transport, food, and course expenses weekly so money pressure becomes visible and manageable.",
         )
     if features["physical_activity"] <= 2:
         add_recommendation(
@@ -278,7 +278,7 @@ def build_recommendations(features: Dict[str, float], stress_score: int) -> List
             "Speak to a human support service",
             "Safety",
             "Urgent",
-            "Because the stress estimate is very high, consider contacting a university counselor, trusted lecturer, doctor, or family member soon.",
+            "Because the pressure estimate is very high, consider contacting a university counselor, trusted lecturer, doctor, or family member soon.",
         )
 
     add_recommendation(
@@ -318,5 +318,5 @@ def predict_student_stress(data: QuestionnaireInput) -> Dict[str, Any]:
         "model_confidence": confidence,
         "top_factors": build_top_factors(features),
         "recommendations": build_recommendations(features, stress_score),
-        "safety_note": "This tool is a research and self-care support prototype, not a medical diagnosis. If stress feels unmanageable or unsafe, contact a qualified professional or emergency support.",
+        "safety_note": "This tool is a research and self-care support prototype, not a medical diagnosis. If pressure feels unmanageable or unsafe, contact a qualified professional or emergency support.",
     }
