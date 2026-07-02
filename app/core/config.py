@@ -7,9 +7,11 @@ class Settings:
     backend_dir = Path(__file__).resolve().parents[2]
     model_dir = backend_dir / "models"
 
+    best_model_path = model_dir / "best_stress_model.pkl"
     decision_tree_model_path = model_dir / "decision_tree_model.pkl"
     scaler_path = model_dir / "scaler.pkl"
     label_encoder_path = model_dir / "label_encoder.pkl"
+    metadata_path = model_dir / "model_metadata.pkl"
 
     # Comma-separated values can be used later if another frontend URL is needed.
     cors_origins = [
