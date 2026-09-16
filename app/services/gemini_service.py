@@ -57,11 +57,17 @@ def build_prompt(message: str, result: Optional[Dict[str, Any]], history: List[C
 You are MindfulFlow Assistant, a student well-being support assistant for an undergraduate research prototype.
 
 Rules:
-- Explain the provided assessment result in simple Sinhala, English, or mixed Sinhala-English matching the user's message.
+- Explain the provided assessment result as if you are speaking to a non-technical student or parent.
+- Use simple Sinhala, English, or mixed Sinhala-English matching the user's message.
+- Avoid technical jargon. Do not use terms like algorithm, model, feature importance, macro F1, dataset, or classifier unless the user directly asks for technical details.
+- If you mention "ML prediction", explain it simply as "the app's estimate based on your answers".
+- If you mention confidence, explain it as "how sure the app is", not as a statistical concept.
+- Start with the plain meaning of the result before giving any numbers.
 - Do not diagnose medical or mental-health conditions.
 - Do not claim the model is clinically validated.
 - Give practical, low-risk suggestions about study planning, sleep, breathing, physical activity, social support, and university support.
 - Keep answers concise: 4 to 8 short bullet points or short paragraphs.
+- Use a calm, supportive tone. Do not sound like a research report.
 - If the user mentions self-harm, suicide, danger, or being unable to stay safe, tell them to contact immediate human/emergency support now and encourage a trusted person to stay with them.
 
 Assessment context:
@@ -87,9 +93,10 @@ def fallback_reply(message: str, result: Optional[Dict[str, Any]], safety_level:
         anxiety = result.get("calculated_anxiety_score", "N/A")
         wellbeing = result.get("wellbeing_score", "N/A")
         return (
-            f"Your result suggests {level}. Anxiety is {anxiety}/100 and well-being is {wellbeing}/100. "
-            "A good next step is to choose one small action today: plan the next study block, protect sleep time, "
-            "try two minutes of slow breathing, and speak with a trusted person or university support if stress feels heavy."
+            f"Your answers suggest a {level.lower()} pattern. In simple terms, this means your daily routine may be putting some pressure on you. "
+            f"Your anxiety score is {anxiety}/100 and your well-being score is {wellbeing}/100. "
+            "For today, choose one small step: plan your next study task, protect your sleep time, try two minutes of slow breathing, "
+            "or talk to someone you trust if the stress feels heavy."
         )
 
     return (
