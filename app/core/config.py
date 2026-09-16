@@ -26,6 +26,7 @@ class Settings:
         for origin in os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
         if origin.strip()
     ]
+    cors_origin_regex = os.getenv("CORS_ORIGIN_REGEX")
 
 
 settings = Settings()

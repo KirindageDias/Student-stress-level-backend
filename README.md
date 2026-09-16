@@ -53,3 +53,19 @@ $env:GEMINI_MODEL="gemini-3.8-flash"
 ```
 
 If no Gemini key is configured, the `/chat` endpoint returns a safe local fallback response so the research prototype remains usable.
+
+## CORS for Deployment
+
+Set `CORS_ORIGINS` on Render to the exact frontend URL that calls the backend:
+
+```env
+CORS_ORIGINS=http://localhost:3000,https://student-stress-level-frontend-9vf6oj8ms-sewmini-s-projects.vercel.app
+```
+
+For Vercel preview URLs, you can also set a regex:
+
+```env
+CORS_ORIGIN_REGEX=https://.*\.vercel\.app
+```
+
+After changing Render environment variables, redeploy or restart the backend service.
