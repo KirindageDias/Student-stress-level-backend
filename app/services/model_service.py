@@ -271,11 +271,12 @@ def predict_student_stress(data: QuestionnaireInput) -> Dict[str, Any]:
     features = calculate_features(data)
     feature_columns = current_metadata.get("feature_columns", DEFAULT_FEATURE_COLUMNS)
     model_input = np.array([[features[column] for column in feature_columns]])
-    target_label = features["stress_level"].replace(" Stress", "")
 
     try:
-        current_model.predict(model_input)
-        confidence = get_model_confidence(current_model, model_input, target_label)
+        prediction = current_model.predict(model_input)[0]
+        ml_label = label_encoder.inverse_transform([prediction])[0] if label_encoder else str(prediction)
+        ml_stress_level = f"{ml_label} Stress"
+        confidence = get_model_confidence(current_model, model_input, str(ml_label))
     except Exception as error:
         raise HTTPException(
             status_code=500,
@@ -283,7 +284,9 @@ def predict_student_stress(data: QuestionnaireInput) -> Dict[str, Any]:
         ) from error
 
     return {
-        "predicted_stress_level": features["stress_level"],
+        "predicted_stress_level": ml_stress_level,
+        "ml_predicted_stress_level": ml_stress_level,
+        "screening_stress_level": features["stress_level"],
         "calculated_stress_score": int(round(features["stress_percent"])),
         "calculated_anxiety_score": int(round(features["anxiety_percent"])),
         "wellbeing_score": int(round(features["wellbeing_percent"])),

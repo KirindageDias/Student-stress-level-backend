@@ -50,6 +50,8 @@ class Recommendation(BaseModel):
 
 class PredictionResponse(BaseModel):
     predicted_stress_level: str
+    ml_predicted_stress_level: str
+    screening_stress_level: str
     calculated_stress_score: int
     calculated_anxiety_score: int
     wellbeing_score: int
